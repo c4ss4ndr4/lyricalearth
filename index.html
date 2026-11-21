@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <title>Contour / Motion — Graphic Match Prototype</title>
+  <meta name="description" content="Find the shared graphic form to move from one lyrical image to the next.">
+  <style>
+    :root{--ink:#000;--paper:#fff;--muted:#929292;--line:#2a2a2a;--cyan:#c4ff47;--panel:#0b0b0b}
+    *{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--ink);color:var(--paper);font-family:'Roboto Flex',Arial,sans-serif}button{font:inherit;color:inherit}body{overflow-x:hidden;background:#000;font-size:clamp(.875rem,.875rem + ((1vw - .2rem)*.417),1.125rem);line-height:1.6}
+    .shell{width:min(100%,80rem);min-height:100vh;margin:auto;padding:0 clamp(16px,3vw,42px);display:grid;grid-template-rows:auto 1fr auto}.topbar{min-height:92px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:14px;font-family:Geom,sans-serif;font-size:clamp(1.4rem,2.5vw,2.1rem);font-weight:300;letter-spacing:.03em}.mark{width:auto;height:auto;border:0;border-radius:0;color:var(--cyan);font-family:Geom,sans-serif;font-size:1.45em;font-weight:300}.chapter{color:var(--muted);font-size:.875rem}
+    main{display:grid;grid-template-columns:minmax(0,1fr) minmax(260px,30%);gap:clamp(18px,3vw,38px);min-height:0;padding:clamp(18px,3vw,38px) 0}.cinema{position:relative;min-height:calc(100vh - 205px);overflow:hidden;background:#070707;border:1px solid var(--line);border-radius:2px}
+    .earth-stage{position:absolute;inset:0;z-index:0;opacity:.48;filter:grayscale(1) contrast(1.22) brightness(.72);transition:opacity 1.2s ease,filter 1.2s ease;pointer-events:none}
+    .earth-stage gmp-map-3d{width:100%;height:100%;display:block;pointer-events:none}
+    .film{position:absolute;inset:0;z-index:1;opacity:0;pointer-events:none;transition:opacity 1.2s ease,transform 1.6s cubic-bezier(.2,.7,.1,1);transform:scale(1.03)}.film.active{opacity:1;transform:scale(1);pointer-events:auto}.film.outgoing{opacity:0;transform:scale(1.07)}.film canvas{position:absolute;inset:0;width:100%;height:100%;mix-blend-mode:screen;cursor:grab;touch-action:none}.film canvas.pulling{cursor:grabbing}
+    .vignette{position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(0,0,0,.5),transparent 22%,transparent 76%,rgba(0,0,0,.2)),linear-gradient(0deg,rgba(0,0,0,.7),transparent 38%)}.grain{position:absolute;z-index:2;inset:0;opacity:.08;pointer-events:none;background:radial-gradient(rgba(255,255,255,.12) 1px,transparent 0);background-size:3px 3px}
+    .geo-attrib{position:absolute;z-index:3;right:14px;bottom:10px;font-size:.68rem;color:rgba(255,255,255,.55);pointer-events:none;letter-spacing:.02em}
+    .prompt{position:absolute;z-index:3;left:clamp(22px,4vw,54px);right:22px;bottom:clamp(22px,5vh,54px);max-width:44rem;pointer-events:none}.eyebrow{font-size:.875rem;line-height:1.3;color:var(--cyan);margin:0 0 12px}.prompt h1{font-family:Geom,sans-serif;font-size:clamp(2.5rem,5.8vw,5.5rem);font-weight:300;line-height:.98;letter-spacing:-.02em;margin:0 0 20px}.prompt h1 i{font-style:normal;font-weight:300;color:rgba(255,255,255,.5)}.instruction{display:flex;align-items:center;gap:12px;font-size:.9rem;line-height:1.45;color:#d0d0d0}.instruction p{margin:0}.instruction span{display:grid;place-items:center;width:30px;height:30px;border:1px solid var(--cyan);border-radius:50%;color:var(--cyan);flex:0 0 auto}
+    .match-panel{padding:clamp(4px,1vw,12px) 0;display:flex;flex-direction:column;background:#000}.panel-label{font-size:.875rem;color:var(--cyan)}.question{font-family:Geom,sans-serif;font-size:clamp(1.85rem,3vw,3rem);font-weight:300;line-height:1.15;letter-spacing:-.02em;margin:18px 0}.gesture-note{font-size:1rem;line-height:1.6;color:#b5b5b5;margin:0}.pull-map{position:relative;height:190px;margin:32px 0;border:1px solid var(--line);overflow:hidden;background:#050505}.pull-map:before,.pull-map:after{content:"";position:absolute;background:var(--line)}.pull-map:before{left:50%;top:0;bottom:0;width:1px}.pull-map:after{top:50%;left:0;right:0;height:1px}.map-node{position:absolute;transform:translate(-50%,-50%);font-size:.7rem;letter-spacing:.06em;color:var(--muted);transition:color .25s,text-shadow .25s;pointer-events:none}.map-node.is-current{color:var(--paper)}.map-node.is-aimed{color:var(--cyan);text-shadow:0 0 10px rgba(196,255,71,.45)}.target-form{position:absolute;left:50%;top:50%;width:76px;height:76px;border:1px dashed rgba(196,255,71,.45);border-radius:50%;transform:translate(-50%,-50%);transition:left .22s ease,top .22s ease,transform .15s,border-color .2s,box-shadow .2s}.target-form.found{border-color:var(--cyan);box-shadow:0 0 38px rgba(196,255,71,.2)}.pull-dot{position:absolute;left:50%;top:50%;width:10px;height:10px;border-radius:50%;background:var(--paper);transform:translate(-50%,-50%)}.tension-label{position:absolute;left:12px;bottom:10px;font-size:.75rem;color:var(--muted)}.tension{height:4px;background:var(--line);overflow:hidden}.tension span{display:block;width:0;height:100%;background:var(--cyan);transition:width .08s}.feedback{min-height:48px;margin-top:14px;font-size:.875rem;line-height:1.5;color:var(--muted)}.feedback.good{color:var(--cyan)}.progress{margin-top:auto;padding-top:28px}.progress-line{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.progress-line b{height:3px;background:var(--line)}.progress-line b.on{background:var(--cyan)}.scene-name{margin-top:12px;display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+    footer{min-height:74px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--muted)}.reset{border:1px solid var(--paper);border-radius:2rem;background:transparent;padding:.45rem 1rem;cursor:pointer;color:var(--paper)}.reset:hover,.reset:focus-visible{outline:none;background:var(--paper);color:var(--ink)}
+    .transition-title{position:absolute;z-index:5;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.15);opacity:0;pointer-events:none;transition:opacity .35s}.transition-title.show{opacity:1}.transition-title span{font-family:Geom,sans-serif;font-size:clamp(2rem,5vw,5rem);font-weight:300;line-height:1}.flash{position:absolute;z-index:4;inset:0;background:var(--cyan);mix-blend-mode:screen;opacity:0;pointer-events:none}.flash.go{animation:flash 1.35s ease}
+    .start-gate{position:fixed;z-index:20;inset:0;overflow:auto;background:#000;transition:opacity .6s,visibility .6s}.start-gate.hidden{opacity:0;visibility:hidden;pointer-events:none}.start-card{width:min(100%,80rem);min-height:100%;margin:auto;padding:clamp(24px,5vw,72px);display:grid;grid-template-columns:minmax(220px,.72fr) minmax(320px,1fr);gap:clamp(40px,8vw,120px);align-items:start}.essay-heading{position:sticky;top:clamp(24px,5vw,72px)}.essay-kicker{margin:0 0 18px;color:var(--cyan);font-size:.9rem}.essay-heading h1{margin:0;font-family:Geom,sans-serif;font-size:clamp(3.4rem,8vw,7.5rem);font-weight:300;line-height:.86;letter-spacing:-.035em}.essay-heading h1 span{display:block;color:#777}.essay{max-width:42rem;padding-top:clamp(8px,4vw,48px)}.essay p{margin:0 0 1.35em;color:#c4c4c4;font-size:clamp(1rem,1.4vw,1.22rem);line-height:1.65}.essay .sequence{font-family:Geom,sans-serif;font-size:clamp(1.8rem,3.3vw,3.1rem);font-weight:300;line-height:1.18;letter-spacing:-.02em;color:#fff;margin-bottom:1.1em}.essay .question-line{font-family:Geom,sans-serif;font-size:clamp(1.6rem,2.8vw,2.7rem);font-weight:300;line-height:1.2;color:#fff;margin:1.35em 0}.essay-actions{display:flex;align-items:center;gap:18px;padding-top:12px}.start{border:0;border-radius:2rem;background:var(--cyan);color:var(--ink);padding:.72em 1.4em;cursor:pointer;font-weight:500}.start:hover,.start:focus-visible{outline:2px solid var(--paper);outline-offset:3px;background:var(--paper)}.essay-note{font-size:.85rem;color:var(--muted)}
+    @keyframes flash{0%,100%{opacity:0}42%{opacity:.05}52%{opacity:.4}60%{opacity:.04}}
+    @media(max-width:820px){.shell{padding:0 16px}.topbar{min-height:72px}.chapter{display:none}main{grid-template-columns:1fr;padding:16px 0}.cinema{min-height:62vh}.prompt{bottom:24px}.prompt h1{font-size:clamp(2.6rem,12vw,5rem)}.match-panel{min-height:36vh;padding:10px 0}.pull-map{height:120px;margin:22px 0}.progress{margin-top:26px}footer{min-height:64px;gap:16px}.start-card{grid-template-columns:1fr;gap:34px;padding:28px 22px 48px}.essay-heading{position:static}.essay{padding-top:0}.essay-heading h1{font-size:clamp(3.8rem,18vw,6.5rem)}}
+    @media(max-width:540px){.prompt h1{margin-bottom:14px}.instruction{font-size:.8rem}.question{margin-bottom:12px}.pull-map{height:95px}}
+    @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar"><div class="brand"><span class="mark">≈</span><span>Contour / Motion</span></div><div class="chapter">Graphic match prototype · chapter <span id="chapter">01</span> / 04</div></header>
+  <main>
+    <section class="cinema" aria-label="Interactive lyrical film">
+      <div class="earth-stage" id="earthStage"></div>
+      <div class="film active" data-scene="0"><canvas aria-hidden="true"></canvas></div>
+      <div class="film" data-scene="1"><canvas aria-hidden="true"></canvas></div>
+      <div class="film" data-scene="2"><canvas aria-hidden="true"></canvas></div>
+      <div class="film" data-scene="3"><canvas aria-hidden="true"></canvas></div>
+      <div class="vignette"></div><div class="grain"></div><div class="flash"></div>
+      <div class="transition-title" aria-live="polite"><span></span></div>
+      <div class="geo-attrib" id="geoAttrib">Geographic relief model</div>
+      <div class="start-gate"><article class="start-card">
+        <header class="essay-heading"><p class="essay-kicker">Contour / Motion</p><h1>Shelter <span>and Space</span></h1></header>
+        <div class="essay">
+          <p class="sequence">Shelter and space.<br>Space and body.<br>Body and yoga.<br>Dance and flow.</p>
+          <p>The body searches for its place inside an image. A contour appears to describe an edge, but an edge is never only an edge. It may be shelter, horizon, skin, gesture, or the beginning of another image.</p>
+          <p>To touch the line is to disturb that certainty.</p>
+          <p>Pulling a contour apart becomes a small act of investigation. The image stretches between what it is and what it might become. A body becomes a landscape. A room opens into a threshold. A curve remembers another curve.</p>
+          <p>Consciousness and meditation enter through repetition. Look, touch, pull, release. The transition does not arrive through a cut. It must be felt for, as if the next image were already present inside this one.</p>
+          <p class="question-line">Another how, why, weird, however.</p>
+          <p>Have all the days become a search for the how, the why, the weird, and the however?</p>
+          <p>The days become weeks and, guess what, the questions remain. I continue investigating with my answer bot. It answers, rearranges, proposes, and generates. But every answer opens another contour.</p>
+          <p>Perhaps the search is not for an answer. Perhaps it is for the shared shape between questions: the line that belongs to two images, two bodies, two thoughts, or two possible worlds at once.</p>
+          <div class="essay-actions"><button class="start" type="button">Enter the work</button><span class="essay-note">Four moving-image studies</span></div>
+        </div>
+      </article></div>
+      <div class="prompt"><p class="eyebrow">Touch the image / find the passage</p><h1>Pull the image <i>toward</i> its next form.</h1><div class="instruction"><span>↗</span><p>Grab any contour and drag. The lines will hold, stretch, and give way.</p></div></div>
+    </section>
+    <aside class="match-panel">
+      <div class="panel-label">Line tension</div><h2 class="question">Pull until the image remembers another shape.</h2>
+      <p class="gesture-note">There is no wrong direction. Stay with the gesture until the field begins to open.</p>
+      <div class="pull-map" aria-hidden="true"><span class="map-node" data-node="0" style="left:25%;top:25%">I · shelter</span><span class="map-node" data-node="1" style="left:75%;top:25%">II · space</span><span class="map-node" data-node="2" style="left:75%;top:75%">III · body</span><span class="map-node" data-node="3" style="left:25%;top:75%">IV · flow</span><div class="target-form"></div><div class="pull-dot"></div><span class="tension-label">gesture key</span></div>
+      <div class="tension"><span></span></div><div class="feedback" aria-live="polite">The contours are waiting for your hand.</div>
+      <div class="progress"><div class="progress-line"><b class="on"></b><b></b><b></b><b></b></div><div class="scene-name"><span id="sceneTitle">Shelter / Space</span><span id="timecode">00:00:00</span></div></div>
+    </aside>
+  </main>
+  <footer><span>Prototype · the graphic match is the interface</span><button class="reset" type="button">Restart sequence</button></footer>
+</div>
+<script src="local-key.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
